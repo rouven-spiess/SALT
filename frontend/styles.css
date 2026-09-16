@@ -1,0 +1,19 @@
+:root{font-family:Inter,Segoe UI,system-ui,sans-serif;color:#18362e;background:#f3f5f0;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}main{max-width:900px;padding:40px 28px;margin:auto}
+header{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:28px;border-bottom:1px solid #ccd7cb}
+.brand{font-weight:800;letter-spacing:.08em}.tag,.eyebrow{font-size:.72rem;letter-spacing:.12em;font-weight:700;color:#54695c}
+.banner{margin:26px 0 42px;padding:16px 20px;background:#dcece2;border-left:4px solid #32624a;display:grid;gap:6px;font-size:.88rem}
+.local{background:#fff0d2;border-color:#a16a14;color:#664711}
+h1{font-size:clamp(2.2rem,6vw,3.7rem);line-height:1.08;letter-spacing:-.045em;max-width:730px;margin:0 0 20px}
+.intro{max-width:600px;color:#536358;font-size:1.1rem;line-height:1.7}nav{display:flex;flex-wrap:wrap;gap:10px;margin:30px 0}
+button,select{font:inherit;border:1px solid #b9c9be;border-radius:7px;padding:11px 16px;background:#fff;color:#18362e}
+button{cursor:pointer;font-weight:600}button:hover{background:#e5eee4}button:disabled{opacity:.55;cursor:wait}
+button:focus-visible,select:focus-visible{outline:3px solid #bd7e19;outline-offset:3px}
+button[aria-current=page]{border-color:#235940}.primary{background:#235940;color:white;border-color:#235940}.primary:hover{background:#17422e}
+section{background:white;border:1px solid #d5dfd5;padding:32px;border-radius:12px;box-shadow:0 6px 22px #18362e06}
+h2{font-size:1.5rem;letter-spacing:-.02em}section p{line-height:1.6}
+label{display:grid;gap:9px;max-width:310px;margin:24px 0;font-weight:600}select{width:100%}
+dl{display:grid;grid-template-columns:80px 1fr;gap:14px;margin:28px 0}dt{color:#617063}dd{margin:0;overflow-wrap:anywhere}
+.actions{display:flex;flex-wrap:wrap;gap:12px}.hint,footer{font-size:.86rem;color:#5e6e62;line-height:1.7}
+footer{margin-top:28px}.error,.success{padding:14px 18px;border-radius:6px}.error{background:#fce5df;color:#882f21}.success{background:#e2efdf;color:#265c2b}
+@media(max-width:540px){main{padding:24px 18px}header{align-items:flex-start;flex-direction:column;gap:10px}section{padding:22px}nav button{flex:1}.actions button{width:100%}}

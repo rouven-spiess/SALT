@@ -54,3 +54,7 @@ AWS Smart Asset Lifecycle Tracker
     ├── Task — Review for exposed credentials
     ├── Task — Complete documentation
     └── Task — Prepare final demo
+
+## Application starter
+
+The React/Vite and AWS SAM authentication starter is included at the repository root. See [setup, tests, and deployment handoff](ASSET_TRACKER.md). AWS deployment and real authentication integration remain pending.
