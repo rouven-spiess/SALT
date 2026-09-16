@@ -1,6 +1,8 @@
-# Local verification — 2026-09-13
+# Local verification record
 
-**Ready for teammate deployment** of the NEW infrastructure: all required local preparation checks passed. This does not mean the complete application is integrated or AWS security acceptance is complete. Deployment and real AWS verification remain pending. No AWS deployment, cloud change set, personal-account action, or real test-user provisioning was performed.
+**Status:** Local validation has passed for the current authentication demo and infrastructure definitions. Application integration, deployment, and real AWS security acceptance remain pending. Test dates and scope are recorded below; no AWS resources or real test users were provisioned during these checks.
+
+## Results — September 13, 2026
 
 | Check | Actual result |
 | --- | --- |
@@ -15,11 +17,11 @@
 | Browser visual/layout check | PASS: desktop 1280x900 and mobile 390x844 inspected; no mobile horizontal overflow |
 | Deployment-command syntax | PASS: all three PowerShell code blocks parsed; no deployment commands executed |
 
-SAM initially reported successful lint alongside a Windows metadata-write permission error. After permission to write SAM CLI metadata was granted, lint and build completed successfully. AWS saved-config and shared-credentials locations were pointed to nonexistent local paths, instance-metadata lookup and SAM telemetry disabled; no personal AWS profile was used.
+SAM CLI 1.166.2 lint and build completed successfully. Validation used isolated AWS configuration paths with instance metadata lookup and telemetry disabled; no personal AWS profile was used.
 
-Initial browser discovery found no connected browser and Chrome was absent. Isolated Edge worked. A missing favicon 404 was fixed with a local SVG. Expected 401/403 responses during negative tests are not JavaScript failures. No JavaScript page errors occurred in the scripted browser checks. The first script attempt used an unavailable URL global in the CLI sandbox; after adapting the test scripts, both completed successfully.
+Browser checks ran in isolated Microsoft Edge sessions. Expected 401/403 responses confirmed negative test cases. No JavaScript page errors occurred in the completed scripted checks.
 
-## Reproduce
+## Reproduction steps
 
 - npm.cmd test
 - npm.cmd run check:build
@@ -31,11 +33,11 @@ Initial browser discovery found no connected browser and Chrome was absent. Isol
 
 Screenshots inspected: output/playwright/local-admin-desktop.png, local-admin-mobile.png, and aws-placeholder.png.
 
-Raw browser artifacts are ignored under .playwright-cli/ and output/playwright/. They use fake local data only. Do not capture or commit real authentication storage, tokens, or credential-bearing traces.
+Raw browser artifacts are ignored under .playwright-cli/ and output/playwright/. They use simulated local data only. Do not capture or commit real authentication storage, tokens, or credential-bearing traces.
 
 ## Evidence limits
 
-Local sessions are fake; unit tests synthesize authorizer claims. Neither verifies Cognito JWT signatures, API Gateway's deployed authorizer, real login/logout/reset, or team IAM permissions. The AWS login provider remains an AWSASSET-6 dependency. Use [the AWS checklist](aws-verification-checklist.md) after teammate deployment; every cloud check remains pending.
+Local sessions are simulated; unit tests synthesize authorizer claims. Neither verifies Cognito JWT signatures, API Gateway's deployed authorizer, real login/logout/reset, or team IAM permissions. The AWS login provider remains an AWSASSET-6 dependency. Use [the AWS checklist](aws-verification-checklist.md) after teammate deployment; every cloud check remains pending.
 
 ## Browser reproduction commands
 
@@ -49,6 +51,6 @@ npx.cmd --yes --package @playwright/cli playwright-cli -s=asset-aws open http://
 npx.cmd --yes --package @playwright/cli playwright-cli -s=asset-aws run-code --filename scripts/browser-aws-placeholder-check.js
 ```
 
-## SALT import recheck — 2026-09-16
+## Results — September 16, 2026
 
-In an isolated checkout based on SALT main, npm.cmd test passed 34/34 tests and npm.cmd run check:build passed with example.invalid endpoints. These checks reused the source folder's existing node_modules; a clean dependency installation was not tested. Application source files are unchanged. SAM, HTTP/browser, and real AWS checks were not repeated during this import. Ignore-rule checks and a pattern-based credential scan passed for the import candidate. The original project folder had no Git history; SALT's two existing commits and project-plan README are preserved.
+In an isolated SALT checkout, `npm.cmd test` passed 34/34 tests and `npm.cmd run check:build` passed with example.invalid endpoints. These checks reused existing installed dependencies; a clean dependency installation was not tested. Application source files were unchanged. SAM, HTTP/browser, and real AWS checks were not repeated. Ignore-rule checks passed, and a pattern-based credential scan found no matches in the import candidate.

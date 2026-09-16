@@ -1,6 +1,6 @@
 # Proposed additional scope: reviewed asset photo suggestions
 
-Not implemented or committed to the current issues. Create a separate team-agreed Jira issue before implementation. The following is a proposal, not agreed acceptance criteria. No face recognition is proposed.
+**Status:** Proposed future scope; implementation has not started. A separate team-agreed Jira issue and acceptance criteria are required before development. Face recognition is outside the proposed scope.
 
 1. The signed-in frontend sends an asset photo to an authorized backend endpoint. Final photo/create permissions must come from the team's agreed matrix, not the demo policy.
 2. The backend checks upload size, actual file signature, dimensions, supported type, and image decoding. Allow JPEG/PNG only initially, strip metadata, and reject invalid or oversized files. Set a conservative byte/pixel limit supported by the chosen model and API transport. Do not trust the extension or Content-Type alone.

@@ -1,12 +1,12 @@
 # SALT — Smart Asset Lifecycle Tracker
 
-A team project for tracking organizational assets from registration through maintenance and replacement, using a React interface and AWS services.
+SALT is an asset management application under development. It is designed to help organizations register assets, track their condition and value, and plan maintenance and replacement.
 
 SALT's planned workflow brings together asset records, secure image uploads, AI-assisted identification, depreciation calculations, and maintenance reminders. The current implementation provides the **authentication and authorization foundation** for that workflow.
 
 > **Project status:** Local authentication demo available; AWS infrastructure defined but not deployed. Real Cognito sign-in, asset storage, image processing, and lifecycle features remain pending.
 
-## What is included today
+## Development progress
 
 | Area | Current state |
 | --- | --- |
@@ -17,7 +17,15 @@ SALT's planned workflow brings together asset records, secure image uploads, AI-
 | Verification | 34 automated local tests and an AWS-mode frontend fixture build passed on September 16, 2026 |
 | Team handoff | Setup instructions, authentication contract, deployment guidance, and AWS verification checklist |
 
-The SAM template does **not** currently create a DynamoDB asset table, image bucket, or AI processing pipeline. Those belong to later implementation work.
+The current milestone establishes protected pages, role-based API access, and the infrastructure needed for authentication. DynamoDB asset storage, image uploads, and AI processing are planned milestones; their resources are not yet included in the SAM template.
+
+## Next milestones
+
+1. Confirm the deployment account, resource ownership, frontend URLs, and required permissions.
+2. Deploy the authentication infrastructure and provision test users in all five groups.
+3. Integrate Cognito login, logout, password reset, and session handling through AWSASSET-6.
+4. Verify protected pages and API access against the deployed environment.
+5. Implement the DynamoDB asset model, asset creation, and viewing/search workflow.
 
 ## Run the local demo
 
@@ -28,10 +36,10 @@ The SAM template does **not** currently create a DynamoDB asset table, image buc
 
 No AWS account, credentials, Docker, or SAM installation is required for the local demo.
 
-While the import is under review, clone its feature branch:
+Clone the repository and install the dependencies:
 
 ```powershell
-git clone --branch feature/import-asset-tracker https://github.com/mrleom/SALT.git
+git clone https://github.com/mrleom/SALT.git
 cd SALT
 npm.cmd ci
 npm.cmd run dev
@@ -39,9 +47,9 @@ npm.cmd run dev
 
 Open **http://localhost:3000**. The port can be changed through `DEV_PORT`.
 
-Commands above use `npm.cmd` for Windows PowerShell. On macOS or Linux, use `npm` instead. Once the import is merged, new clones can use the default branch.
+The commands use `npm.cmd` for Windows PowerShell. On macOS or Linux, use `npm` instead.
 
-### Try the permission checks
+### Local verification walkthrough
 
 1. Open **Protected page** while signed out to see the sign-in prompt.
 2. Enter the local demo as **Employee** and call the protected API.
@@ -49,7 +57,7 @@ Commands above use `npm.cmd` for Windows PowerShell. On macOS or Linux, use `npm
 4. Sign out and enter as **Administrator** to confirm that the admin request succeeds.
 5. Repeat with the other roles, then sign out and revisit the protected page.
 
-The local role picker uses **fake identities** and is intended for example data only. Anyone running the demo can select a role. It does not establish real user identity or verify deployed AWS security.
+The local role picker uses **simulated identities** and is intended for example data only. Anyone running the demo can select a role. It does not establish real user identity or verify deployed AWS security.
 
 ## Roles and access
 
@@ -133,11 +141,11 @@ npm.cmd run test:local
 
 **Latest recorded check — September 16, 2026:** 34/34 tests passed and the frontend fixture build passed. These checks reused existing installed dependencies; a clean dependency installation was not tested during the import. SAM and browser results are recorded separately in the [verification notes](docs/local-verification.md).
 
-Local test results do not confirm real Cognito sign-in, token signature validation, or deployed API Gateway behavior. The real authentication provider is still a placeholder and does not grant access.
+Local test results do not confirm real Cognito sign-in, token signature validation, or deployed API Gateway behavior. The Cognito authentication provider is pending implementation; its current placeholder denies access.
 
 ## AWS deployment and configuration
 
-Deployment is a separate team step, performed in the **teammate-approved AWS account**. Follow the [deployment guide](docs/deployment.md) for account verification, permissions, parameters, review of the proposed infrastructure changes, and deployment commands.
+Deployment is a separate team step, performed in the **AWS account approved by the team and account owner**. Follow the [deployment guide](docs/deployment.md) for account verification, permissions, parameters, review of the proposed infrastructure changes, and deployment commands.
 
 The current template creates new infrastructure. Connecting existing team resources requires a separately reviewed integration change.
 
@@ -146,11 +154,11 @@ After deployment, use `.env.example` to prepare the ignored `.env.aws.local` fil
 - Keep AWS credentials in external profiles or SSO, outside this repository.
 - Treat every `VITE_` variable as public browser configuration; never include secrets.
 - Keep `.env` files, credential files, dependencies, generated builds, and local SAM folders out of Git. Only the placeholder `.env.example` is included.
-- Complete the [AWS verification checklist](docs/aws-verification-checklist.md) before claiming cloud authentication or security acceptance.
+- Complete the [AWS verification checklist](docs/aws-verification-checklist.md) to confirm cloud authentication and security acceptance.
 
 ## Four-week roadmap
 
-This is the project plan, not a completion checklist. Use the current-state table above and the linked handoffs for implementation evidence.
+The roadmap defines the intended project scope. Completed local work and pending integrations are recorded in the development progress table and issue handoffs.
 
 | Week | Focus | Planned deliverables |
 | --- | --- | --- |
@@ -165,14 +173,14 @@ Bedrock work is proposed future scope and needs its own team-agreed issue. AI su
 
 Use feature branches and pull requests to review changes before merging into `main`. Include the applicable issue keys in commit messages and update the relevant handoff when implementation or verification changes.
 
-The imported authentication work is tracked under **AWSASSET-4, AWSASSET-5, AWSASSET-7, and AWSASSET-8**. Real login, logout, and password reset remain the **AWSASSET-6** teammate deliverable. These existing keys are retained in the handoffs; the four-week roadmap does not imply a completed Jira migration.
+The authentication foundation is tracked under **AWSASSET-4, AWSASSET-5, AWSASSET-7, and AWSASSET-8**. Login, logout, password reset, and session integration are assigned to **AWSASSET-6**. The handoffs retain these issue references; mapping them to the revised roadmap remains a project coordination task.
 
-| Document | Use it for |
+| Document | Purpose |
 | --- | --- |
 | [Authentication starter](ASSET_TRACKER.md) | Detailed walkthrough of the current implementation |
 | [Jira handoffs](docs/handoffs/README.md) | Per-issue scope, evidence, and remaining dependencies |
 | [Authentication contract](docs/auth-contract.md) | Frontend/provider integration and team coordination |
-| [Deployment guide](docs/deployment.md) | Teammate account setup and deployment procedure |
+| [Deployment guide](docs/deployment.md) | Approved account setup and deployment procedure |
 | [Deployment permissions](docs/deployment-permissions.md) | Required access for the deployment owner |
 | [Local verification](docs/local-verification.md) | Recorded results and their limits |
 | [AWS verification checklist](docs/aws-verification-checklist.md) | Checks to perform against the deployed system |

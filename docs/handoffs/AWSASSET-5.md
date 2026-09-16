@@ -1,19 +1,19 @@
 # AWSASSET-5 — Create Cognito groups and test users
 
-**Status:** Ready for teammate deployment (local checks passed); deployed groups/test users and AWS acceptance PENDING.
+**Status:** Local implementation and checks are complete for the current demo scope. Deployment, real authentication integration, and AWS acceptance remain pending.
 
-**Changed:** NEW-pool template defines Employee, Technician, Manager, Administrator and Auditor. All may read /demo; only Administrator may read /admin. This is a provisional demo policy. Real users are intentionally not embedded in infrastructure or local handoffs.
+**Implementation:** The template for the new pool defines Employee, Technician, Manager, Administrator and Auditor. All may read /demo; only Administrator may read /admin. This is a provisional demo policy. Real users are intentionally not embedded in infrastructure or local handoffs.
 
 **Setup:** Deploy in the confirmed teammate account per [deployment handoff](../deployment.md). An authorized administrator provisions agreed test users and memberships through Cognito, coordinating invite/password/reset handling with AWSASSET-6. Never copy passwords or tokens into Jira/files.
 
-**Acceptance:** Inspect all five deployed groups; provision one test user per group plus a no-group case; verify fresh-token memberships and role restrictions against the real API. Agree business permissions before adding asset operations.
+**Acceptance criteria:** Inspect all five deployed groups; provision one test user per group plus a no-group case; verify fresh-token memberships and role restrictions against the real API. Agree business permissions before adding asset operations.
 
-**Actual results (2026-09-13):** SAM lint/build PASS. 34/34 local tests PASS; live local HTTP checks PASS for anonymous 401, all five groups' demo/admin restrictions, and logout. Browser checks PASS for all five groups, admin denial/allow, reload, logout, and session-loss gating; see [local results](../local-verification.md). These use fake identities. No actual groups/users deployed or real token claims verified.
+**Verification — September 13, 2026:** SAM lint/build PASS. 34/34 local tests PASS; live local HTTP checks PASS for anonymous 401, all five groups' demo/admin restrictions, and logout. Browser checks PASS for all five groups, admin denial/allow, reload, logout, and session-loss gating; see [local results](../local-verification.md). These use simulated identities. Groups and test users have not been deployed, and real token claims have not been verified.
 
-**Dependencies:** AWSASSET-4 deployment, approved test users and admin permissions, AWSASSET-6 login/reset flow, team permission matrix. Real checks remain in [AWS checklist](../aws-verification-checklist.md).
+**Remaining dependencies:** AWSASSET-4 deployment, approved test users and admin permissions, AWSASSET-6 login/reset flow, team permission matrix. Real checks remain in [AWS checklist](../aws-verification-checklist.md).
 
-**Commit key:** AWSASSET-5. See Git history for commits; Jira has not been updated.
+**Commit key:** AWSASSET-5. Implementation history is recorded in Git. This document is not synchronized with Jira.
 
-## SALT import verification — 2026-09-16
+## Verification — September 16, 2026
 
-Imported for review on feature/import-asset-tracker while preserving SALT history and its project-plan README. Application setup is in ASSET_TRACKER.md. Re-ran the existing local suite (34/34 PASS) and the AWS-mode frontend fixture build (PASS), using the existing installed dependencies. Source implementation is unchanged. Ignore checks cover environment secrets, AWS credentials, dependencies, generated builds, local SAM folders, and browser artifacts. Pattern-based credential scanning found no matches in the candidate import. SAM and browser checks were not repeated; cloud deployment, real authentication, and AWS security acceptance remain pending.
+The existing local suite passed 34/34 tests, and the AWS-mode frontend fixture build passed using installed dependencies. A clean dependency installation was not tested. Ignore-rule checks passed, and a pattern-based credential scan found no matches in the import candidate. SAM and browser checks were not repeated. AWS deployment and security verification remain pending. See [the verification record](../local-verification.md) for details.
