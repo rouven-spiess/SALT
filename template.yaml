@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Asset Tracker authentication starter; deploy separately from local development.
+
+Parameters:
+  FrontendOrigin:
+    Type: String
+    AllowedPattern: '^(http://localhost(:[0-9]{1,5})?|https://[A-Za-z0-9.-]+(:[0-9]{1,5})?)$'
+    Description: Exact frontend origin, without a trailing slash. Use HTTPS outside localhost.
+  CallbackPath:
+    Type: String
+    Default: /callback
+    AllowedPattern: '^/[A-Za-z0-9/_-]*$'
+    Description: Callback path agreed with AWSASSET-6; relative to FrontendOrigin.
+  LogoutPath:
+    Type: String
+    Default: /
+    AllowedPattern: '^/[A-Za-z0-9/_-]*$'
+  ApiStageName:
+    Type: String
+    AllowedPattern: '^[A-Za-z0-9_]+$'
+    MaxLength: 128
+    Description: Team-selected API stage.
+  ResourceServerIdentifier:
+    Type: String
+    AllowedPattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$'
+    MaxLength: 128
+    Description: Team-selected scope namespace; changing it changes the required access-token scope.
+  CognitoDomainPrefix:
+    Type: String
+    MinLength: 1
+    MaxLength: 63
+    AllowedPattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+    Description: Choose a unique Cognito hosted login domain prefix for the deployment.
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 5
+    MemorySize: 128
+    Architectures: [x86_64]
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      UsernameConfiguration:
+        CaseSensitive: false
+      MfaConfiguration: OPTIONAL
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 3
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+
+  EmployeeGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Employee
+      UserPoolId: !Ref UserPool
+  TechnicianGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Technician
+      UserPoolId: !Ref UserPool
+  ManagerGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Manager
+      UserPoolId: !Ref UserPool
+  AdministratorGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Administrator
+      UserPoolId: !Ref UserPool
+  AuditorGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Auditor
+      UserPoolId: !Ref UserPool
+
+  ResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId: !Ref UserPool
+      Identifier: !Ref ResourceServerIdentifier
+      Name: !Sub '${AWS::StackName}-api'
+      Scopes:
+        - ScopeName: demo.read
+          ScopeDescription: Access the demo API; group checks also apply.
+
+  WebClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: ResourceServer
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      SupportedIdentityProviders: [COGNITO]
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [code]
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - !Sub '${ResourceServerIdentifier}/demo.read'
+      CallbackURLs:
+        - !Sub '${FrontendOrigin}${CallbackPath}'
+      LogoutURLs:
+        - !Sub '${FrontendOrigin}${LogoutPath}'
+      AccessTokenValidity: 15
+      IdTokenValidity: 15
+      RefreshTokenValidity: 1
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      ExplicitAuthFlows: [ALLOW_REFRESH_TOKEN_AUTH]
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref CognitoDomainPrefix
+      UserPoolId: !Ref UserPool
+
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref ApiStageName
+      EndpointConfiguration: REGIONAL
+      Cors:
+        AllowOrigin: !Sub "'${FrontendOrigin}'"
+        AllowHeaders: "'Authorization,Content-Type'"
+        AllowMethods: "'GET,OPTIONS'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+            AuthorizationScopes:
+              - !Sub '${ResourceServerIdentifier}/demo.read'
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: !Sub "'${FrontendOrigin}'"
+              Cache-Control: "'no-store'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: !Sub "'${FrontendOrigin}'"
+              Cache-Control: "'no-store'"
+
+  DemoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/
+      Handler: handler.handler
+      Environment:
+        Variables:
+          COGNITO_CLIENT_ID: !Ref WebClient
+          COGNITO_ISSUER: !Sub 'https://cognito-idp.${AWS::Region}.${AWS::URLSuffix}/${UserPool}'
+          FRONTEND_ORIGIN: !Ref FrontendOrigin
+          REQUIRED_SCOPE: !Sub '${ResourceServerIdentifier}/demo.read'
+      Events:
+        Demo:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /demo
+            Method: get
+        Admin:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /admin
+            Method: get
+
+  DemoLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${DemoFunction}'
+      RetentionInDays: 14
+
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+  ClientId:
+    Value: !Ref WebClient
+  CognitoDomain:
+    Value: !Sub 'https://${CognitoDomainPrefix}.auth.${AWS::Region}.amazoncognito.com'
+  ApiBaseUrl:
+    Value: !Sub 'https://${Api}.execute-api.${AWS::Region}.${AWS::URLSuffix}/${ApiStageName}'
+  CallbackUrl:
+    Value: !Sub '${FrontendOrigin}${CallbackPath}'
+
+  LogoutUrl:
+    Value: !Sub '${FrontendOrigin}${LogoutPath}'
+  FrontendOrigin:
+    Value: !Ref FrontendOrigin
+  RequiredScope:
+    Value: !Sub '${ResourceServerIdentifier}/demo.read'
+  IssuerUrl:
+    Value: !Sub 'https://cognito-idp.${AWS::Region}.${AWS::URLSuffix}/${UserPool}'
+  UserPoolArn:
+    Value: !GetAtt UserPool.Arn
+  ApiId:
+    Value: !Ref Api
+  ApiStageName:
+    Value: !Ref ApiStageName
+  DeploymentRegion:
+    Value: !Ref AWS::Region
