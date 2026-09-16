@@ -1,14 +1,14 @@
-# Deployment handoff — teammate account only
+# Deployment guide — approved team account
 
-**Ready for teammate deployment of the new infrastructure.** Passing local checks and their limits are recorded in [local verification results](local-verification.md). No deployment or real AWS verification has been performed. The infrastructure can be handed over independently of the unfinished AWSASSET-6 login provider; it is not yet an integrated application.
+**Status:** Local infrastructure validation has passed. Deployment to the approved team account and real AWS verification remain pending. Results and limits are recorded in [local verification](local-verification.md). Infrastructure deployment can proceed independently of AWSASSET-6; the complete application also requires the authentication provider integration.
 
 ## Resource ownership: this is a new stack
 
-template.yaml creates a NEW Cognito user pool, five groups, resource server/scope, public app client, hosted-login prefix domain, API Gateway REST API/stage/authorizer, demo Lambda, execution role, invocation permissions, and log group. CloudFormation generates pool/client/API/function/role identifiers; the stack name and domain prefix come from the teammate. Required group names and /demo and /admin are application contracts, not account-specific resource names.
+`template.yaml` defines a new Cognito user pool, five groups, resource server/scope, public app client, hosted-login prefix domain, API Gateway REST API/stage/authorizer, demo Lambda, execution role, invocation permissions, and log group. CloudFormation generates pool/client/API/function/role identifiers; the deployment owner supplies the stack name and domain prefix. Required group names and /demo and /admin are application contracts, not account-specific resource names.
 
-It does NOT discover, import, update, or attach to an existing team pool or API. It does not create real test users, frontend hosting, a database, or Bedrock resources.
+The template does not discover, import, update, or attach to an existing team pool or API. It does not create real test users, frontend hosting, a database, or Bedrock resources.
 
-If the team already owns a pool/API, stop before creating a parallel stack: agree the owning template/repository and integrate these definitions there in a separate change. An existing pool requires its ARN/issuer, agreed app client, resource-server scope and groups; an existing API needs the authorizer and scopes bound to EVERY protected method plus Lambda invocation permissions, deployment, and CORS. Simply changing an output URL or a React variable does not secure the existing API. No existing-resource integration mode is implemented or tested here.
+If the team already owns a pool/API, stop before creating a parallel stack: agree the owning template/repository and integrate these definitions there in a separate change. An existing pool requires its ARN/issuer, agreed app client, resource-server scope and groups; an existing API needs the authorizer and scopes bound to every protected method plus Lambda invocation permissions, deployment, and CORS. Simply changing an output URL or a React variable does not secure the existing API. No existing-resource integration mode is implemented or tested here.
 
 ## Required inputs
 
@@ -28,7 +28,7 @@ If the team already owns a pool/API, stop before creating a parallel stack: agre
 
 The template has no fixed account ID, deployment region, frontend origin, API stage, or physical pool/API/function/role name. AWS service DNS suffixes are conventions, not personal endpoints. CognitoDomain currently targets commercial AWS (amazoncognito.com); China/GovCloud need a separately reviewed domain/feature configuration.
 
-Local development defaults to localhost:3000 only. Override DEV_PORT in a local .env file or shell; set LOCAL_TEST_ORIGIN for HTTP smoke tests. Do not use --port independently of DEV_PORT, because the fake-session origin guard must match the server.
+Local development defaults to localhost:3000 only. Override DEV_PORT in a local .env file or shell; set LOCAL_TEST_ORIGIN for HTTP smoke tests. Do not use --port independently of DEV_PORT, because the local session origin check must match the server.
 
 ## Local checks (no AWS credentials needed)
 
@@ -49,13 +49,13 @@ $env:AWS_EC2_METADATA_DISABLED = 'true'
 
 In separate terminals, run npm.cmd run dev and npm.cmd run test:local. Browser steps and actual results are in the local verification report. The build check supplies public example.invalid fixtures and writes .local/build-check; never deploy that fixture frontend. Normal npm.cmd run build requires real stack outputs.
 
-## Permissions the teammate must arrange
+## Deployment permissions
 
 See [deployment permissions](deployment-permissions.md). Use an existing team-approved CloudFormation service role and private artifact bucket. CAPABILITY_IAM acknowledges role creation; it does not grant the deploying principal permissions. No personal-account credentials or profile values are included here.
 
-## Teammate-run deployment commands — not run by this assistant
+## Deployment procedure — pending execution
 
-Only run these after the teammate agrees to creating NEW resources and verifies the target account. SSO login, if needed, is performed using the explicit team profile outside this repository. Enter public configuration at prompts; use neither secrets nor tokens as parameters.
+The deployment owner must confirm approval for new resources and verify the target account before running these commands. SSO login, if needed, is performed using the explicit team profile outside this repository. Enter public configuration at prompts; use neither secrets nor tokens as parameters.
 
 ```powershell
 $TeamProfile = Read-Host 'Teammate AWS CLI profile'
@@ -102,7 +102,7 @@ $SamArgs = @(
 if ($LASTEXITCODE -ne 0) { throw 'Change-set preparation failed.' }
 ```
 
-This uploads artifacts and creates a CloudFormation change set in the TEAM account, but does not execute the resource changes. It is a cloud action, not an offline dry run. Review the exact change-set ARN returned by SAM, additions/replacements, IAM role, callbacks, account, region, and existing-resource ownership before continuing. Do not save tokens or credentials in transcripts.
+This uploads artifacts and creates a CloudFormation change set in the approved team account, but does not execute the resource changes. It is a cloud action, not an offline dry run. Review the exact change-set ARN returned by SAM, additions/replacements, IAM role, callbacks, account, region, and existing-resource ownership before continuing. Do not save tokens or credentials in transcripts.
 
 ```powershell
 $ChangeSetArn = Read-Host 'Exact reviewed change-set ARN returned by SAM'

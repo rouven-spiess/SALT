@@ -1,12 +1,12 @@
-# AWSASSET-6 coordination contract — proposed, awaiting teammate agreement
+# Authentication integration contract — proposed
 
 AWSASSET-6 owns real login, logout, password reset, callback handling, and session/token lifecycle. AWSASSET-7 owns page protection and attaching the provider's access token to API calls. AWSASSET-4/5/8 own the infrastructure and API permission checks described in their handoffs.
 
-The React demo is a development harness, not delivery of AWSASSET-6. Its fake role picker and session endpoint live in local/mock-auth.mjs and only load during local Vite development. Real AWS integration is intentionally blocked by the placeholder frontend/team-auth.js. No real login, logout, or password-reset implementation is claimed.
+**Status:** The interface is proposed and awaits team agreement. The React demo uses simulated sessions in `local/mock-auth.mjs`, loaded only during local Vite development. The placeholder in `frontend/team-auth.js` denies access until the real provider is implemented. Cognito login, logout, and password reset remain pending.
 
-## Integration seam
+## Provider interface
 
-Have the teammate implement or adapt these functions in frontend/team-auth.js:
+The AWSASSET-6 implementation must provide the following functions in `frontend/team-auth.js`:
 
 | Function | Contract |
 | --- | --- |
@@ -15,7 +15,7 @@ Have the teammate implement or adapt these functions in frontend/team-auth.js:
 | signIn() | Start the team login flow |
 | signOut() | Clear the provider session and perform the team's Cognito logout flow |
 
-The teammate owns any password-reset UI. Replace the starter sign-in controls with team components during integration. Agree how cross-tab sign-out/session expiry notifies the page guard; the current demo rechecks via the API and clears its protected view on 401. It is not a complete session subscription system.
+AWSASSET-6 also owns the password-reset interface. Replace the starter sign-in controls with team components during integration. Agree how cross-tab sign-out/session expiry notifies the page guard; the current demo rechecks via the API and clears its protected view on 401. It is not a complete session subscription system.
 
 ## Values and decisions to exchange
 
@@ -27,6 +27,6 @@ The teammate owns any password-reset UI. Replace the starter sign-in controls wi
 - Agree test-user provisioning, invite delivery, MFA enrollment, account recovery, and password-reset acceptance tests with AWSASSET-6.
 - Access tokens expire after 15 minutes in the template. API Gateway may accept already issued tokens until expiry after logout or group changes; agree whether immediate revocation is a requirement.
 
-## Joint acceptance session (not run)
+## Integration acceptance — pending
 
-Deploy the development stack; connect the real provider; verify login, callback, reload/session expiry, logout, password reset, direct /protected navigation, and API 401/403 results using users from all five groups. Record evidence in each issue handoff. No teammate has been contacted and no Jira issue has been updated by this setup.
+Deploy the development stack; connect the real provider; verify login, callback, reload/session expiry, logout, password reset, direct /protected navigation, and API 401/403 results using users from all five groups. Record evidence in each issue handoff. Integration acceptance requires recorded results from the deployed environment.
