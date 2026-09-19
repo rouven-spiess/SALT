@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createHandler, handler as awsHandler } from '../backend/handler.mjs';
 import { GROUPS, authorize } from '../backend/auth.mjs';
 import { createMockMiddleware } from '../local/mock-auth.mjs';
+import { hostedUiHost, oauthScopes } from '../frontend/oauth-config.js';
 
 const config = { requiredScope: 'asset-tracker/demo.read', clientId: 'test-client', issuer: 'https://issuer.example/pool', origin: 'http://localhost:3000' };
 const handler = createHandler(config);
@@ -121,6 +122,15 @@ test('deployment-selected scope is required instead of a fixed namespace', async
 });
 test('missing deployment scope fails closed', async () => {
   assert.equal((await createHandler({ ...config, requiredScope: undefined })(event())).statusCode, 503);
+});
+test('hosted UI host is the Cognito domain hostname', () => {
+  assert.equal(hostedUiHost('https://login.example.invalid'), 'login.example.invalid');
+});
+test('hosted UI host rejects non-HTTPS Cognito domains', () => {
+  assert.throws(() => hostedUiHost('http://login.example.invalid'), /HTTPS/);
+});
+test('oauth scopes always include openid, email, and the required API scope', () => {
+  assert.deepEqual(oauthScopes('salt-sandbox/demo.read'), ['openid', 'email', 'salt-sandbox/demo.read']);
 });
 test('local origin can use a team-selected port', async () => {
   const origin = 'http://localhost:4317';

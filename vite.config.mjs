@@ -27,6 +27,7 @@ export default defineConfig(({ command, mode }) => {
   return {
     define: { 'import.meta.env.VITE_AUTH_MODE': JSON.stringify(authMode) },
     plugins: authMode === 'local' ? [localAuthPlugin(settings)] : [],
+    appType: 'spa',
     server: { host: settings.host, port: settings.port, strictPort: true },
     preview: { host: settings.host, port: settings.port, strictPort: true },
   };

@@ -50,7 +50,7 @@ function App() {
       <strong>{isLocal ? 'LOCAL DEMONSTRATION' : 'AWS INTEGRATION DEMO'}</strong>
       <span>{isLocal
         ? 'Fake sign-in and example data. The role picker is not real authentication.'
-        : 'Connect the AWSASSET-6 login provider to use the configured Cognito API.'}</span>
+        : 'Sign in through Amazon Cognito Hosted UI. Access tokens are sent to the deployed API.'}</span>
     </aside>
     <h1>Start with who can access what.</h1>
     <p className="intro">A small workspace for testing sign-in, protected pages, and backend group permissions.</p>
@@ -64,12 +64,12 @@ function App() {
     {!identity && !busy && <section>
       <span className="eyebrow">01 / SIGN IN</span>
       <h2>{page === '/protected' ? 'Sign in to open this page' : 'Choose your starting point'}</h2>
-      <p>{isLocal ? 'Try Employee first, then Administrator to compare permissions.' : 'Real login, logout, and password reset belong to AWSASSET-6. The provider integration is pending.'}</p>
+      <p>{isLocal ? 'Try Employee first, then Administrator to compare permissions.' : 'Cognito Hosted UI handles login, first-password change, and forgot-password. There is no role picker.'}</p>
       {isLocal && <label>Demo group<select value={group} onChange={e => setGroup(e.target.value)}>
         {groups.map(name => <option key={name}>{name}</option>)}
       </select></label>}
       <button className="primary" disabled={busy} onClick={() => act(login)}>
-        {isLocal ? 'Start local demo' : 'Continue to team sign-in'}
+        {isLocal ? 'Start local demo' : 'Sign in with Cognito'}
       </button>
     </section>}
     {identity && page === '/' && <section><h2>You are signed in</h2>

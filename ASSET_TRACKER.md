@@ -2,14 +2,14 @@
 
 SALT's current implementation establishes the frontend and backend access controls needed for the asset management workflow. It includes a React + Vite interface, a local authentication simulator, backend group permissions, and AWS SAM infrastructure definitions.
 
-**Status:** Local implementation and validation are complete for the current demo scope. AWS deployment, Cognito provider integration, and cloud security verification remain pending. Asset persistence and lifecycle features are planned in the [project roadmap](README.md#four-week-roadmap).
+**Status:** Local implementation and Amplify Auth Hosted UI client are in place. Sandbox Cognito/API are deployed. Test users and cloud login evidence remain pending. Asset persistence and lifecycle features are planned in the [project roadmap](README.md#four-week-roadmap).
 
 ## Implementation scope
 
 | Component | Implemented | Remaining work |
 | --- | --- | --- |
 | Frontend | Protected demo page, signed-out view, permission feedback, and handling for API denials | Integrate the Cognito provider and final team navigation |
-| Authentication | Local sessions and a provider integration interface | AWSASSET-6 login, logout, password reset, callbacks, and session lifecycle |
+| Authentication | Local sessions plus Amplify Auth Hosted UI against the existing Cognito pool | Provision test users and record Cognito login/logout/reset evidence |
 | Authorization | Backend identity checks and permissions for five groups | Verify deployed API access and agree asset-level business permissions |
 | Infrastructure | Cognito pool/client/groups, API Gateway authorizer, Lambda, and logs defined in SAM | Deploy to the approved account and verify the resources |
 
@@ -47,7 +47,7 @@ SAM packages only `backend/`. The role picker and session adapter remain outside
 | --- | --- |
 | `frontend/main.jsx` | Sign-in view, protected page, and permission feedback |
 | `frontend/auth.js` | Local session requests and calls to the authentication provider |
-| `frontend/team-auth.js` | Placeholder for the AWSASSET-6 provider |
+| `frontend/team-auth.js` | Amplify Auth provider: Hosted UI login, callback, access token, logout |
 | `frontend/team-config.js` | Public authentication configuration |
 | `backend/auth.mjs` | Identity validation and permissions that deny access unless explicitly allowed |
 | `backend/handler.mjs` | Protected Lambda demo endpoints |

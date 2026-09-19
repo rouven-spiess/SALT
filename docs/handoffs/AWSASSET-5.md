@@ -1,6 +1,6 @@
 # AWSASSET-5 — Create Cognito groups and test users
 
-**Status:** Local implementation and checks are complete for the current demo scope. Deployment, real authentication integration, and AWS acceptance remain pending.
+**Status:** Five groups exist on the sandbox stack. One test user per group plus a no-group user were provisioned in the sandbox pool on 19 September 2026. Temporary passwords were delivered out of band (not stored in this repository). Token membership and API role checks against Cognito remain pending.
 
 **Implementation:** The template for the new pool defines Employee, Technician, Manager, Administrator and Auditor. All may read /demo; only Administrator may read /admin. This is a provisional demo policy. Real users are intentionally not embedded in infrastructure or local handoffs.
 
@@ -10,7 +10,7 @@
 
 **Verification — September 13, 2026:** SAM lint/build PASS. 34/34 local tests PASS; live local HTTP checks PASS for anonymous 401, all five groups' demo/admin restrictions, and logout. Browser checks PASS for all five groups, admin denial/allow, reload, logout, and session-loss gating; see [local results](../local-verification.md). These use simulated identities. Groups and test users have not been deployed, and real token claims have not been verified.
 
-**Remaining dependencies:** AWSASSET-4 deployment, approved test users and admin permissions, AWSASSET-6 login/reset flow, team permission matrix. Real checks remain in [AWS checklist](../aws-verification-checklist.md).
+**Remaining dependencies:** AWSASSET-6 Hosted UI first-login (force new password) and AWS checklist token/group evidence. Do not copy passwords into Git or Jira.
 
 **Commit key:** AWSASSET-5. Implementation history is recorded in Git. This document is not synchronized with Jira.
 

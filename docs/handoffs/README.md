@@ -6,6 +6,7 @@ The authentication foundation has passed local tests, browser checks, SAM lint/b
 | --- | --- | --- |
 | [AWSASSET-4](AWSASSET-4.md) — Cognito pool | SAM pool, client, and domain definitions; lint/build passed | Deploy and verify the pool and client in the approved account |
 | [AWSASSET-5](AWSASSET-5.md) — Groups and test users | Five group definitions and passing local permission tests | Deploy groups, provision test users, and verify token memberships |
+| [AWSASSET-6](AWSASSET-6.md) — Login, logout, password reset | Amplify Auth Hosted UI client implemented; local mock unchanged | Create test users and record Cognito/API evidence |
 | [AWSASSET-7](AWSASSET-7.md) — Protected pages | React page guard and provider interface; local browser checks passed | Integrate AWSASSET-6 and verify the full session lifecycle |
 | [AWSASSET-8](AWSASSET-8.md) — API authorizer | SAM authorizer and Lambda permission checks | Verify real token rejection and role restrictions through API Gateway |
 
@@ -19,6 +20,6 @@ Detailed evidence is recorded in [local verification](../local-verification.md).
 
 ## Scope and coordination
 
-AWSASSET-6 owns real login, logout, password reset, and session handling. The provider contract still requires team agreement. Bedrock suggestions are [proposed future work](../bedrock-plan.md) and require a separate issue; they are outside the acceptance criteria of this milestone.
+AWSASSET-6 owns real login, logout, password reset, and session handling. The sandbox flow is agreed in [AWSASSET-6.md](AWSASSET-6.md); the original [authentication contract](../auth-contract.md) remains the proposed teammate interface. Bedrock suggestions are [proposed future work](../bedrock-plan.md) and require a separate issue; they are outside the acceptance criteria of this milestone.
 
 Implementation changes should include the relevant issue keys in commit messages and update the corresponding handoff with scope, setup, verification results, and outstanding dependencies. The [project README](../../README.md) contains the roadmap, and the [implementation guide](../../ASSET_TRACKER.md) describes the authentication foundation.

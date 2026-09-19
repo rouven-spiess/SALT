@@ -2,7 +2,7 @@
 
 AWSASSET-6 owns real login, logout, password reset, callback handling, and session/token lifecycle. AWSASSET-7 owns page protection and attaching the provider's access token to API calls. AWSASSET-4/5/8 own the infrastructure and API permission checks described in their handoffs.
 
-**Status:** The interface is proposed and awaits team agreement. The React demo uses simulated sessions in `local/mock-auth.mjs`, loaded only during local Vite development. The placeholder in `frontend/team-auth.js` denies access until the real provider is implemented. Cognito login, logout, and password reset remain pending.
+**Status:** Sandbox implementation uses Amplify Auth in `frontend/team-auth.js` against the existing Cognito pool. The original interface below is the integration contract. Local demo sessions in `local/mock-auth.mjs` remain separate.
 
 ## Provider interface
 
