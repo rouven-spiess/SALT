@@ -51,6 +51,17 @@ npx.cmd --yes --package @playwright/cli playwright-cli -s=asset-aws open http://
 npx.cmd --yes --package @playwright/cli playwright-cli -s=asset-aws run-code --filename scripts/browser-aws-placeholder-check.js
 ```
 
-## Results — September 16, 2026
+## Results — September 19, 2026
+
+| Check | Actual result |
+| --- | --- |
+| `npm test` | PASS: 40/40; previous auth checks plus asset create/list/get/patch matrix, validation, depreciation, and local `/api/assets` adapter |
+| `npm run test:local` | PASS on `http://localhost:3001`; anonymous `/api/assets` 401, group list/create policy, demo/admin, logout |
+| `npm run check:build` | PASS: AWS-mode fixture build |
+| SAM update `salt-auth-sandbox` | UPDATE_COMPLETE; table `salt-auth-sandbox-Assets` |
+| Seed + verify scripts | 6 profiles, 10 assets; unauthenticated GET `/assets` 403; Employee list 3; Auditor list 10; Auditor POST 403 |
+| Browser (local demo) | Signed-out `/assets` sign-in prompt; Employee list without create; detail shows computed book value and problem report; `/assets/new` hidden for Employee |
+
+Cloud login with real Cognito passwords was not used for the role matrix. The verify script invoked the deployed Lambda with authorizer-shaped events and checked the public API without a token.
 
 In an isolated SALT checkout, `npm.cmd test` passed 34/34 tests and `npm.cmd run check:build` passed with example.invalid endpoints. These checks reused existing installed dependencies; a clean dependency installation was not tested. Application source files were unchanged. SAM, HTTP/browser, and real AWS checks were not repeated. Ignore-rule checks passed, and a pattern-based credential scan found no matches in the import candidate.

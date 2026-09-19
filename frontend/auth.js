@@ -12,8 +12,13 @@ export async function completeSignIn() {
   if (!isLocal) await teamAuth.initialize();
 }
 
-export async function getProtected(path) {
-  if (!['/demo', '/admin'].includes(path)) throw new Error('Unknown API operation');
+function allowedPath(path) {
+  const route = path.split('?')[0];
+  return route === '/demo' || route === '/admin' || route === '/assets' || route.startsWith('/assets/');
+}
+
+export async function apiRequest(path, { method = 'GET', body } = {}) {
+  if (!allowedPath(path)) throw new Error('Unknown API operation');
   const headers = {};
   let base = '/api';
   if (!isLocal) {
@@ -24,12 +29,20 @@ export async function getProtected(path) {
     if (!token) throw Object.assign(new Error('Sign in required'), { status: 401 });
     headers.Authorization = 'Bearer ' + token;
   }
-  const response = await fetch(base + path, { headers, cache: 'no-store' });
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const response = await fetch(base + path, {
+    method, headers, cache: 'no-store',
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
   const data = await response.json();
   if (!response.ok) {
     throw Object.assign(new Error(data.error || data.message || 'API request denied'), { status: response.status });
   }
   return data;
+}
+
+export async function getProtected(path) {
+  return apiRequest(path);
 }
 
 export async function signOut() {

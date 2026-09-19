@@ -1,4 +1,6 @@
 import { authenticate, authorize, HttpError } from './auth.mjs';
+import { handleAssetRoute } from './assets.mjs';
+import { createDynamoStore } from './store-dynamo.mjs';
 
 export function createHandler(config) {
   return async event => {
@@ -23,6 +25,8 @@ export function createHandler(config) {
           message: 'The backend verified Administrator membership.', ...identity,
         }) };
       }
+      const asset = await handleAssetRoute(event, identity, config.store);
+      if (asset) return { statusCode: asset.statusCode, headers, body: JSON.stringify(asset.body) };
       throw new HttpError(404, 'Route not found');
     } catch (error) {
       return { statusCode: error instanceof HttpError ? error.statusCode : 500,
@@ -37,4 +41,5 @@ export const handler = async event => createHandler({
   issuer: process.env.COGNITO_ISSUER,
   origin: process.env.FRONTEND_ORIGIN,
   requiredScope: process.env.REQUIRED_SCOPE,
+  store: createDynamoStore(process.env.ASSETS_TABLE),
 })(event);

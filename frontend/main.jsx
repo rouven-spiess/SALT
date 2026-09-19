@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { completeSignIn, getProtected, isLocal, signIn, signOut } from './auth.js';
+import { AssetsView, canCreateAssets, isAssetsPage } from './assets.jsx';
 import './styles.css';
 
 const groups = ['Employee', 'Technician', 'Manager', 'Administrator', 'Auditor'];
@@ -28,7 +29,7 @@ function App() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
-  function navigate(path) { history.pushState(null, '', path); setPage(path); setResult(''); }
+  function navigate(path) { history.pushState(null, '', path); setPage(path); setResult(''); setError(''); }
   async function act(action) {
     setBusy(true); setError(''); setResult('');
     try { await action(); }
@@ -37,13 +38,14 @@ function App() {
   }
   async function login() {
     await signIn(group);
-    if (isLocal) { await loadIdentity(); navigate('/protected'); }
+    if (isLocal) { await loadIdentity(); navigate(isAssetsPage(window.location.pathname) ? window.location.pathname : '/protected'); }
   }
   async function logout() {
     await signOut();
     setIdentity(null); navigate('/');
   }
   const isAdmin = identity?.groups.includes('Administrator');
+  const needsSignIn = page === '/protected' || isAssetsPage(page);
   return <main>
     <header><span className="brand">AT / ASSET TRACKER</span><span className="tag">AUTHENTICATION LAB</span></header>
     <aside className={isLocal ? 'banner local' : 'banner'}>
@@ -53,17 +55,19 @@ function App() {
         : 'Sign in through Amazon Cognito Hosted UI. Access tokens are sent to the deployed API.'}</span>
     </aside>
     <h1>Start with who can access what.</h1>
-    <p className="intro">A small workspace for testing sign-in, protected pages, and backend group permissions.</p>
+    <p className="intro">A small workspace for testing sign-in, protected pages, asset records, and backend group permissions.</p>
     <nav aria-label="Demo navigation">
       <button onClick={() => navigate('/')} aria-current={page === '/' ? 'page' : undefined}>Overview</button>
       <button onClick={() => navigate('/protected')} aria-current={page === '/protected' ? 'page' : undefined}>Protected page</button>
+      <button onClick={() => navigate('/assets')} aria-current={isAssetsPage(page) && page !== '/assets/new' ? 'page' : undefined}>Assets</button>
+      {identity && canCreateAssets(identity) && <button onClick={() => navigate('/assets/new')} aria-current={page === '/assets/new' ? 'page' : undefined}>Register asset</button>}
       {identity && <button disabled={busy} onClick={() => act(logout)}>Sign out</button>}
     </nav>
     {error && <p role="alert" className="error">{error}</p>}
     {busy && <p role="status">Working…</p>}
     {!identity && !busy && <section>
       <span className="eyebrow">01 / SIGN IN</span>
-      <h2>{page === '/protected' ? 'Sign in to open this page' : 'Choose your starting point'}</h2>
+      <h2>{needsSignIn ? 'Sign in to open this page' : 'Choose your starting point'}</h2>
       <p>{isLocal ? 'Try Employee first, then Administrator to compare permissions.' : 'Cognito Hosted UI handles login, first-password change, and forgot-password. There is no role picker.'}</p>
       {isLocal && <label>Demo group<select value={group} onChange={e => setGroup(e.target.value)}>
         {groups.map(name => <option key={name}>{name}</option>)}
@@ -73,8 +77,11 @@ function App() {
       </button>
     </section>}
     {identity && page === '/' && <section><h2>You are signed in</h2>
-      <p>Open the protected page to call the API and inspect your permissions.</p>
-      <button className="primary" onClick={() => navigate('/protected')}>Open protected page</button>
+      <p>Open the protected page or the asset list. The backend still decides which records you can see.</p>
+      <div className="actions">
+        <button className="primary" onClick={() => navigate('/protected')}>Open protected page</button>
+        <button onClick={() => navigate('/assets')}>View assets</button>
+      </div>
     </section>}
     {identity && page === '/protected' && <section>
       <span className="eyebrow">02 / PROTECTED PAGE</span><h2>Access granted by the backend</h2>
@@ -87,7 +94,8 @@ function App() {
       <p className="hint">All five groups can read this demo. Only Administrator can read the admin endpoint.</p>
       {result && <p role="status" className="success">{result}</p>}
     </section>}
-    <footer>React controls the page. The backend decides whether the request is allowed.<br />Photo identification is planned for a later step; no photos or asset records are saved here.</footer>
+    {identity && isAssetsPage(page) && <AssetsView identity={identity} page={page} navigate={navigate} busy={busy} act={act} />}
+    <footer>React controls the page. The backend decides whether the request is allowed.<br />Photos and AI review stay for a later week; book value is calculated when a record is read.</footer>
   </main>;
 }
 createRoot(document.getElementById('root')).render(<App />);

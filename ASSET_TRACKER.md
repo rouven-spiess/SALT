@@ -2,16 +2,16 @@
 
 SALT's current implementation establishes the frontend and backend access controls needed for the asset management workflow. It includes a React + Vite interface, a local authentication simulator, backend group permissions, and AWS SAM infrastructure definitions.
 
-**Status:** Local implementation and Amplify Auth Hosted UI client are in place. Sandbox Cognito/API are deployed. Test users and cloud login evidence remain pending. Asset persistence and lifecycle features are planned in the [project roadmap](README.md#four-week-roadmap).
+**Status:** Local implementation and Amplify Auth Hosted UI client are in place. Sandbox Cognito/API and the DynamoDB Assets table are defined in SAM. Week 2 photos remain pending.
 
 ## Implementation scope
 
 | Component | Implemented | Remaining work |
 | --- | --- | --- |
-| Frontend | Protected demo page, signed-out view, permission feedback, and handling for API denials | Integrate the Cognito provider and final team navigation |
-| Authentication | Local sessions plus Amplify Auth Hosted UI against the existing Cognito pool | Provision test users and record Cognito login/logout/reset evidence |
-| Authorization | Backend identity checks and permissions for five groups | Verify deployed API access and agree asset-level business permissions |
-| Infrastructure | Cognito pool/client/groups, API Gateway authorizer, Lambda, and logs defined in SAM | Deploy to the approved account and verify the resources |
+| Frontend | Protected demo page, asset list/search/create/detail, signed-out view, permission feedback | Hosted frontend, photo UI |
+| Authentication | Local sessions plus Amplify Auth Hosted UI against the existing Cognito pool | Record Cognito login/logout/reset evidence for the presentation |
+| Authorization | Backend identity checks for demo endpoints and asset create/view/update | Verify every group against the live API with real tokens |
+| Infrastructure | Cognito, API Gateway authorizer, Lambda, DynamoDB Assets table, logs | Week 2 S3/Bedrock; approved-account deployment |
 
 Implementation records are maintained in the [issue handoffs](docs/handoffs/README.md). The [authentication contract](docs/auth-contract.md) describes the proposed integration interface and decisions awaiting team agreement.
 
@@ -31,7 +31,7 @@ Implementation records are maintained in the [issue handoffs](docs/handoffs/READ
 | Administrator | Allowed | Allowed |
 | Auditor | Allowed | Denied |
 
-This provisional policy covers demo endpoints only. Recognized group permissions combine when a user has multiple groups; no recognized group means access is denied. Asset creation, editing, ownership, and deletion rules remain to be agreed. Cognito group membership does not grant AWS IAM permissions.
+This provisional policy covers demo endpoints and Week 1 assets. Recognized group permissions combine when a user has multiple groups; no recognized group means access is denied. See [asset data model](docs/assets-data-model.md). Cognito group membership does not grant AWS IAM permissions.
 
 ## Local development
 
@@ -45,21 +45,25 @@ SAM packages only `backend/`. The role picker and session adapter remain outside
 
 | File | Responsibility |
 | --- | --- |
-| `frontend/main.jsx` | Sign-in view, protected page, and permission feedback |
-| `frontend/auth.js` | Local session requests and calls to the authentication provider |
+| `frontend/main.jsx` | Sign-in view, protected page, and asset navigation |
+| `frontend/assets.jsx` | Asset list, search, create, and detail views |
+| `frontend/auth.js` | Local session requests and signed API calls |
 | `frontend/team-auth.js` | Amplify Auth provider: Hosted UI login, callback, access token, logout |
 | `frontend/team-config.js` | Public authentication configuration |
-| `backend/auth.mjs` | Identity validation and permissions that deny access unless explicitly allowed |
-| `backend/handler.mjs` | Protected Lambda demo endpoints |
-| `local/mock-auth.mjs` | Development-only simulated sessions |
-| `template.yaml` | Authentication infrastructure, API, Lambda, and logging |
+| `backend/auth.mjs` | Identity validation and group permissions for demo and asset actions |
+| `backend/assets.mjs` | Asset validation, role-scoped queries, and computed book value |
+| `backend/handler.mjs` | Protected Lambda demo and asset endpoints |
+| `local/mock-auth.mjs` | Development-only simulated sessions and in-memory asset store |
+| `template.yaml` | Cognito, API, Lambda, DynamoDB Assets table, and logging |
 | `tests/auth.test.mjs` | Permission, identity-context, and local session tests |
+| `tests/assets.test.mjs` | Asset create/list/get/patch matrix and validation |
 
 ## Verification progress
 
 - **September 13, 2026:** 34 automated tests, HTTP role/logout checks, SAM lint/build, and the frontend fixture build passed. Browser checks covered all five groups, page protection, reload, logout, session loss, desktop/mobile layout, and the AWS provider placeholder.
 - **September 16, 2026:** All 34 automated tests and the frontend fixture build passed again. These checks reused installed dependencies; a clean dependency installation was not tested. SAM and browser checks were not repeated.
-- **Pending:** Real Cognito sign-in, deployed API Gateway token validation, and cloud security acceptance. Local sessions and synthetic claims do not verify these behaviors.
+- **September 19, 2026:** 40 automated tests passed, including the asset permission matrix. Sandbox stack `salt-auth-sandbox` was updated with table `salt-auth-sandbox-Assets`. Seeded 10 assets; unauthenticated GET `/assets` returned 403; Employee saw a subset; Auditor listed 10 and could not POST.
+- **Pending:** End-to-end Cognito Hosted UI login with real user passwords against the live `/assets` UI. The verify script used authorizer-shaped Lambda events, not browser Hosted UI tokens.
 
 Reproduction commands, detailed results, and evidence limits are recorded in [local verification](docs/local-verification.md).
 

@@ -4,28 +4,27 @@ SALT is an asset management application under development. It is designed to hel
 
 SALT's planned workflow brings together asset records, secure image uploads, AI-assisted identification, depreciation calculations, and maintenance reminders. The current implementation provides the **authentication and authorization foundation** for that workflow.
 
-> **Project status:** Local authentication demo available; AWS infrastructure defined but not deployed. Real Cognito sign-in, asset storage, image processing, and lifecycle features remain pending.
+> **Project status:** Local authentication demo and Cognito-protected asset APIs are in place. Sandbox stack `salt-auth-sandbox` has been updated with a DynamoDB Assets table. Week 2 photos/Bedrock and Week 3 maintenance workflows remain pending.
 
 ## Development progress
 
 | Area | Current state |
 | --- | --- |
-| Frontend | React + Vite interface with a local role picker and protected demo page |
-| Permissions | Backend checks for five user groups; administrator-only demo endpoint |
-| Authentication | Simulated local sessions; integration interface for the team's real authentication provider |
-| Infrastructure | AWS SAM template for Cognito, API Gateway, Lambda, and CloudWatch logging |
-| Verification | 34 automated local tests and an AWS-mode frontend fixture build passed on September 16, 2026 |
-| Team handoff | Setup instructions, authentication contract, deployment guidance, and AWS verification checklist |
+| Frontend | React + Vite interface with local role picker, protected demo page, and asset list/create/detail views |
+| Permissions | Backend checks for five user groups on demo endpoints and asset create/view/update |
+| Authentication | Simulated local sessions; Amplify Auth Hosted UI against the existing Cognito pool |
+| Infrastructure | AWS SAM template for Cognito, API Gateway, Lambda, DynamoDB Assets table, and CloudWatch logging |
+| Verification | Automated local tests cover auth and the asset permission matrix; sandbox stack update is a separate step |
+| Team handoff | Setup instructions, authentication contract, deployment guidance, AWS verification checklist, and [asset data model](docs/assets-data-model.md) |
 
-The current milestone establishes protected pages, role-based API access, and the infrastructure needed for authentication. DynamoDB asset storage, image uploads, and AI processing are planned milestones; their resources are not yet included in the SAM template.
+The current milestone covers sign-in, group-based API access, DynamoDB asset records, and search/create/view. Image uploads and AI processing remain later milestones.
 
 ## Next milestones
 
-1. Confirm the deployment account, resource ownership, frontend URLs, and required permissions.
-2. Deploy the authentication infrastructure and provision test users in all five groups.
-3. Integrate Cognito login, logout, password reset, and session handling through AWSASSET-6.
-4. Verify protected pages and API access against the deployed environment.
-5. Implement the DynamoDB asset model, asset creation, and viewing/search workflow.
+1. Verify Cognito login and asset APIs against the sandbox stack with real test users.
+2. Add private S3 photo storage and Bedrock identification (Week 2).
+3. Extend depreciation/maintenance history, EventBridge, and SNS (Week 3).
+4. Complete security testing and the approved-account presentation (Week 4).
 
 ## Run the local demo
 
@@ -55,23 +54,24 @@ The commands use `npm.cmd` for Windows PowerShell. On macOS or Linux, use `npm` 
 2. Enter the local demo as **Employee** and call the protected API.
 3. Select **Test denied admin request** to confirm that the backend returns `403`.
 4. Sign out and enter as **Administrator** to confirm that the admin request succeeds.
-5. Repeat with the other roles, then sign out and revisit the protected page.
+5. Open **Assets**. Employee should see assigned records only; Auditor should see the full seeded list.
+6. Sign in as Technician or Administrator to register an asset. Employee, Manager, and Auditor should not see the create form, and `POST /assets` still returns `403`.
 
 The local role picker uses **simulated identities** and is intended for example data only. Anyone running the demo can select a role. It does not establish real user identity or verify deployed AWS security.
 
 ## Roles and access
 
-The current policy applies only to the two demo endpoints:
+Asset permissions are enforced in Lambda. Hiding a button is not authorization.
 
-| Group | `GET /demo` | `GET /admin` |
-| --- | --- | --- |
-| Employee | Allowed | Denied |
-| Technician | Allowed | Denied |
-| Manager | Allowed | Denied |
-| Administrator | Allowed | Allowed |
-| Auditor | Allowed | Denied |
+| Group | `GET /demo` | `GET /admin` | Create assets | Read assets | Update assets |
+| --- | --- | --- | --- | --- | --- |
+| Employee | Allowed | Denied | Denied | Assigned to the caller only | Problem report on assigned assets |
+| Technician | Allowed | Denied | Allowed | All | Condition, status, maintenance dates |
+| Manager | Allowed | Denied | Denied | Caller's department | Denied |
+| Administrator | Allowed | Allowed | Allowed | All | All asset fields except identity claims |
+| Auditor | Allowed | Denied | Denied | All | Denied |
 
-Requests without a recognized group are denied. Asset creation, editing, ownership, and deletion permissions still need an agreed team policy.
+Requests without a recognized group are denied. See [asset data model](docs/assets-data-model.md) for keys, GSIs, and field rules.
 
 Frontend page guards control the interface. Backend checks enforce access to the API.
 
@@ -79,13 +79,12 @@ Frontend page guards control the interface. Backend checks enforce access to the
 
 **Local development:** React runs through Vite with a development-only session adapter and the backend permission logic.
 
-**AWS deployment design:** The React client will sign users in through Cognito. API Gateway is configured to validate Cognito access tokens and the required API scope; Lambda then checks the trusted identity context and group permissions. CloudWatch stores Lambda logs.
+**AWS deployment design:** The React client signs users in through Cognito. API Gateway validates Cognito access tokens and the required API scope; Lambda checks the trusted identity context and group permissions, then reads and writes DynamoDB. CloudWatch stores Lambda logs.
 
 ```text
 React frontend
     │
     ├── Sign-in through Amazon Cognito
-    │   Real frontend authentication integration is pending
     │
     └── API request with access token
             │
@@ -95,10 +94,10 @@ React frontend
        AWS Lambda
        Identity and group permission checks
             │
-       CloudWatch Logs
+       DynamoDB Assets table
 ```
 
-These AWS resources are defined in [`template.yaml`](template.yaml); they have not been deployed or verified in AWS. The local mock adapter is excluded from the Lambda package and is not loaded in AWS mode.
+These AWS resources are defined in [`template.yaml`](template.yaml). The sandbox stack `salt-auth-sandbox` is the current deployment target. The local mock adapter is excluded from the Lambda package and is not loaded in AWS mode.
 
 ## Repository layout
 
@@ -110,7 +109,7 @@ SALT/
 ├── public/             Static frontend assets
 ├── tests/              Authorization tests and local HTTP smoke checks
 ├── scripts/            Build verification and browser checks
-├── docs/               Deployment, verification, and team handoffs
+├── docs/               Deployment, verification, data model, and team handoffs
 ├── template.yaml       AWS SAM infrastructure definition
 ├── .env.example        Public configuration placeholders
 ├── package.json        Dependencies and local commands
@@ -139,15 +138,13 @@ npm.cmd run test:local
 | `npm.cmd run dev:aws` | Run the frontend in AWS mode with configured public endpoints |
 | `npm.cmd run build` | Build the AWS-mode frontend with required AWS configuration |
 
-**Latest recorded check — September 16, 2026:** 34/34 tests passed and the frontend fixture build passed. These checks reused existing installed dependencies; a clean dependency installation was not tested during the import. SAM and browser results are recorded separately in the [verification notes](docs/local-verification.md).
-
-Local test results do not confirm real Cognito sign-in, token signature validation, or deployed API Gateway behavior. The Cognito authentication provider is pending implementation; its current placeholder denies access.
+**Latest recorded local check:** run `npm test` after changing auth or asset code. These checks do not confirm Cognito JWT signatures or API Gateway authorizer behavior. Use `npm run seed:sandbox` and `npm run verify:sandbox` only with the sandbox SSO profile, never with production credentials.
 
 ## AWS deployment and configuration
 
 Deployment is a separate team step, performed in the **AWS account approved by the team and account owner**. Follow the [deployment guide](docs/deployment.md) for account verification, permissions, parameters, review of the proposed infrastructure changes, and deployment commands.
 
-The current template creates new infrastructure. Connecting existing team resources requires a separately reviewed integration change.
+The template has no always-on servers. After a stack update it includes Cognito, API Gateway, Lambda, logs, and one on-demand DynamoDB table for asset metadata. Connecting existing team resources still requires a separately reviewed integration change.
 
 After deployment, use `.env.example` to prepare the ignored `.env.aws.local` file with the approved stack outputs. Coordinate real login, logout, password reset, and callback handling through the [authentication contract](docs/auth-contract.md).
 
@@ -183,4 +180,4 @@ The authentication foundation is tracked under **AWSASSET-4, AWSASSET-5, AWSASSE
 | [Deployment guide](docs/deployment.md) | Approved account setup and deployment procedure |
 | [Deployment permissions](docs/deployment-permissions.md) | Required access for the deployment owner |
 | [Local verification](docs/local-verification.md) | Recorded results and their limits |
-| [AWS verification checklist](docs/aws-verification-checklist.md) | Checks to perform against the deployed system |
+| [Asset data model](docs/assets-data-model.md) | DynamoDB keys, GSIs, and group permission matrix |

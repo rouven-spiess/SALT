@@ -36,7 +36,7 @@ Parameters:
 Globals:
   Function:
     Runtime: nodejs22.x
-    Timeout: 5
+    Timeout: 10
     MemorySize: 128
     Architectures: [x86_64]
 
@@ -145,7 +145,7 @@ Resources:
       Cors:
         AllowOrigin: !Sub "'${FrontendOrigin}'"
         AllowHeaders: "'Authorization,Content-Type'"
-        AllowMethods: "'GET,OPTIONS'"
+        AllowMethods: "'GET,POST,PATCH,OPTIONS'"
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
         AddDefaultAuthorizerToCorsPreflight: false
@@ -166,6 +166,59 @@ Resources:
               Access-Control-Allow-Origin: !Sub "'${FrontendOrigin}'"
               Cache-Control: "'no-store'"
 
+  AssetsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-Assets'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+        - AttributeName: GSI2PK
+          AttributeType: S
+        - AttributeName: GSI2SK
+          AttributeType: S
+        - AttributeName: GSI3PK
+          AttributeType: S
+        - AttributeName: GSI3SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: GSI2PK
+              KeyType: HASH
+            - AttributeName: GSI2SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI3
+          KeySchema:
+            - AttributeName: GSI3PK
+              KeyType: HASH
+            - AttributeName: GSI3SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   DemoFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -177,6 +230,19 @@ Resources:
           COGNITO_ISSUER: !Sub 'https://cognito-idp.${AWS::Region}.${AWS::URLSuffix}/${UserPool}'
           FRONTEND_ORIGIN: !Ref FrontendOrigin
           REQUIRED_SCOPE: !Sub '${ResourceServerIdentifier}/demo.read'
+          ASSETS_TABLE: !Ref AssetsTable
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt AssetsTable.Arn
+                - !Sub '${AssetsTable.Arn}/index/*'
       Events:
         Demo:
           Type: Api
@@ -190,6 +256,30 @@ Resources:
             RestApiId: !Ref Api
             Path: /admin
             Method: get
+        AssetsCreate:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /assets
+            Method: post
+        AssetsList:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /assets
+            Method: get
+        AssetGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /assets/{id}
+            Method: get
+        AssetPatch:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /assets/{id}
+            Method: patch
 
   DemoLogGroup:
     Type: AWS::Logs::LogGroup
@@ -225,3 +315,5 @@ Outputs:
     Value: !Ref ApiStageName
   DeploymentRegion:
     Value: !Ref AWS::Region
+  AssetsTableName:
+    Value: !Ref AssetsTable

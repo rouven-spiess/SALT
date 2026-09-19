@@ -2,11 +2,50 @@ export const GROUPS = Object.freeze([
   'Employee', 'Technician', 'Manager', 'Administrator', 'Auditor',
 ]);
 
-// Provisional demo policy: extend with named actions and ownership checks later.
 const permissions = Object.freeze({
   'demo:read': GROUPS,
   'admin:read': ['Administrator'],
+  'assets:create': ['Technician', 'Administrator'],
+  'assets:read': GROUPS,
+  'assets:update': ['Employee', 'Technician', 'Administrator'],
 });
+
+export const STATUSES = Object.freeze([
+  'Available', 'Assigned', 'Checked Out', 'In Maintenance', 'Damaged', 'Lost', 'Stolen', 'Retired',
+]);
+
+export function hasGroup(identity, group) {
+  return identity.groups.includes(group);
+}
+
+export function canReadAllAssets(identity) {
+  return ['Technician', 'Administrator', 'Auditor'].some(group => hasGroup(identity, group));
+}
+
+export function canReadDepartment(identity) {
+  return hasGroup(identity, 'Manager') || canReadAllAssets(identity);
+}
+
+export function patchFieldsFor(identity) {
+  if (hasGroup(identity, 'Administrator')) {
+    return Object.freeze([
+      'assetTag', 'category', 'description', 'manufacturer', 'model', 'serialNumber',
+      'purchaseDate', 'purchaseValue', 'salvageValue', 'usefulLifeYears', 'depreciationMethod',
+      'assignedUserId', 'assignedEmail', 'department', 'building', 'room', 'condition', 'status',
+      'problemNote', 'lastCleaningDate', 'lastMaintenanceDate', 'nextMaintenanceDate', 'expectedReplacementDate',
+    ]);
+  }
+  if (hasGroup(identity, 'Technician')) {
+    return Object.freeze([
+      'condition', 'status', 'lastCleaningDate', 'lastMaintenanceDate',
+      'nextMaintenanceDate', 'expectedReplacementDate',
+    ]);
+  }
+  if (hasGroup(identity, 'Employee')) {
+    return Object.freeze(['status', 'condition', 'problemNote']);
+  }
+  return Object.freeze([]);
+}
 
 export class HttpError extends Error {
   constructor(statusCode, message) {

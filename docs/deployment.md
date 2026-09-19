@@ -4,9 +4,7 @@
 
 ## Resource ownership: this is a new stack
 
-`template.yaml` defines a new Cognito user pool, five groups, resource server/scope, public app client, hosted-login prefix domain, API Gateway REST API/stage/authorizer, demo Lambda, execution role, invocation permissions, and log group. CloudFormation generates pool/client/API/function/role identifiers; the deployment owner supplies the stack name and domain prefix. Required group names and /demo and /admin are application contracts, not account-specific resource names.
-
-The template does not discover, import, update, or attach to an existing team pool or API. It does not create real test users, frontend hosting, a database, or Bedrock resources.
+The template currently creates a Cognito user pool, five groups, resource server/scope, public app client, hosted-login prefix domain, API Gateway REST API/stage/authorizer, demo Lambda, DynamoDB Assets table, execution role, invocation permissions, and log group.
 
 If the team already owns a pool/API, stop before creating a parallel stack: agree the owning template/repository and integrate these definitions there in a separate change. An existing pool requires its ARN/issuer, agreed app client, resource-server scope and groups; an existing API needs the authorizer and scopes bound to every protected method plus Lambda invocation permissions, deployment, and CORS. Simply changing an output URL or a React variable does not secure the existing API. No existing-resource integration mode is implemented or tested here.
 
