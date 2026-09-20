@@ -36,6 +36,8 @@ test('missing verified context rejects forged authorization and group headers', 
 for (const [name, overrides, expected] of [
   ['expired token', { exp: 1 }, 401],
   ['missing expiry', { exp: undefined }, 401],
+  ['API Gateway date-string expiry', { exp: new Date(Date.now() + 60000).toUTCString().replace('GMT', 'UTC') }, 200],
+  ['API Gateway expired date-string expiry', { exp: 'Tue Oct 25 10:11:58 UTC 2022' }, 401],
   ['wrong pool', { iss: 'https://attacker.example/pool' }, 401],
   ['wrong client', { client_id: 'other-client' }, 401],
   ['ID token', { token_use: 'id' }, 401],

@@ -41,6 +41,11 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
   return data;
 }
 
+export async function getAccessToken() {
+  if (isLocal) return null;
+  return teamAuth.getAccessToken();
+}
+
 export async function getProtected(path) {
   return apiRequest(path);
 }

@@ -64,15 +64,24 @@ export function parseGroups(value) {
   return [...new Set(value.filter(group => GROUPS.includes(group)))];
 }
 
+export function claimExpirySeconds(value) {
+  if (value == null || value === '') return NaN;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return numeric > 1e12 ? numeric / 1000 : numeric;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed / 1000 : NaN;
+}
+
 export function authenticate(event, config, now = Date.now()) {
   if (!config.clientId || !config.issuer || !config.requiredScope) throw new HttpError(503, 'Authentication is not configured');
   // Only API Gateway's verified authorizer context is trusted. Never decode a
   // client-supplied JWT, role header, query parameter, or request body here.
-  const claims = event.requestContext?.authorizer?.claims;
+  const authorizer = event.requestContext?.authorizer;
+  const claims = authorizer?.claims && typeof authorizer.claims === 'object' ? authorizer.claims : authorizer;
+  const exp = claimExpirySeconds(claims?.exp);
   if (!claims || typeof claims.sub !== 'string' || !claims.sub ||
       claims.token_use !== 'access' || claims.client_id !== config.clientId ||
-      claims.iss !== config.issuer || !Number.isFinite(Number(claims.exp)) ||
-      Number(claims.exp) <= now / 1000) {
+      claims.iss !== config.issuer || !Number.isFinite(exp) || exp <= now / 1000) {
     throw new HttpError(401, 'Sign in required');
   }
   if (!String(claims.scope ?? '').split(' ').includes(config.requiredScope)) {

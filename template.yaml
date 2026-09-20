@@ -120,8 +120,10 @@ Resources:
         - !Sub '${ResourceServerIdentifier}/demo.read'
       CallbackURLs:
         - !Sub '${FrontendOrigin}${CallbackPath}'
+        - !Sub 'https://${FrontendDistribution.DomainName}${CallbackPath}'
       LogoutURLs:
         - !Sub '${FrontendOrigin}${LogoutPath}'
+        - !Sub 'https://${FrontendDistribution.DomainName}${LogoutPath}'
       AccessTokenValidity: 15
       IdTokenValidity: 15
       RefreshTokenValidity: 1
@@ -137,13 +139,89 @@ Resources:
       Domain: !Ref CognitoDomainPrefix
       UserPoolId: !Ref UserPool
 
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+  FrontendOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-frontend'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        HttpVersion: http2
+        IPV6Enabled: true
+        Comment: !Sub '${AWS::StackName} SPA'
+        PriceClass: PriceClass_100
+        DefaultRootObject: index.html
+        Origins:
+          - Id: frontend-s3
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !Ref FrontendOAC
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: frontend-s3
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2021
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}'
+
   Api:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref ApiStageName
       EndpointConfiguration: REGIONAL
       Cors:
-        AllowOrigin: !Sub "'${FrontendOrigin}'"
+        AllowOrigin: !Sub "'https://${FrontendDistribution.DomainName}'"
         AllowHeaders: "'Authorization,Content-Type'"
         AllowMethods: "'GET,POST,PATCH,OPTIONS'"
       Auth:
@@ -158,12 +236,12 @@ Resources:
         DEFAULT_4XX:
           ResponseParameters:
             Headers:
-              Access-Control-Allow-Origin: !Sub "'${FrontendOrigin}'"
+              Access-Control-Allow-Origin: !Sub "'https://${FrontendDistribution.DomainName}'"
               Cache-Control: "'no-store'"
         DEFAULT_5XX:
           ResponseParameters:
             Headers:
-              Access-Control-Allow-Origin: !Sub "'${FrontendOrigin}'"
+              Access-Control-Allow-Origin: !Sub "'https://${FrontendDistribution.DomainName}'"
               Cache-Control: "'no-store'"
 
   AssetsTable:
@@ -228,7 +306,7 @@ Resources:
         Variables:
           COGNITO_CLIENT_ID: !Ref WebClient
           COGNITO_ISSUER: !Sub 'https://cognito-idp.${AWS::Region}.${AWS::URLSuffix}/${UserPool}'
-          FRONTEND_ORIGIN: !Ref FrontendOrigin
+          FRONTEND_ORIGIN: !Sub 'https://${FrontendDistribution.DomainName}'
           REQUIRED_SCOPE: !Sub '${ResourceServerIdentifier}/demo.read'
           ASSETS_TABLE: !Ref AssetsTable
       Policies:
@@ -297,12 +375,17 @@ Outputs:
   ApiBaseUrl:
     Value: !Sub 'https://${Api}.execute-api.${AWS::Region}.${AWS::URLSuffix}/${ApiStageName}'
   CallbackUrl:
-    Value: !Sub '${FrontendOrigin}${CallbackPath}'
-
+    Value: !Sub 'https://${FrontendDistribution.DomainName}${CallbackPath}'
   LogoutUrl:
-    Value: !Sub '${FrontendOrigin}${LogoutPath}'
+    Value: !Sub 'https://${FrontendDistribution.DomainName}${LogoutPath}'
   FrontendOrigin:
-    Value: !Ref FrontendOrigin
+    Value: !Sub 'https://${FrontendDistribution.DomainName}'
+  HostedFrontendUrl:
+    Value: !Sub 'https://${FrontendDistribution.DomainName}'
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+  FrontendDistributionId:
+    Value: !Ref FrontendDistribution
   RequiredScope:
     Value: !Sub '${ResourceServerIdentifier}/demo.read'
   IssuerUrl:

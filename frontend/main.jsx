@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { completeSignIn, getProtected, isLocal, signIn, signOut } from './auth.js';
+import { completeSignIn, getAccessToken, getProtected, isLocal, signIn, signOut } from './auth.js';
 import { AssetsView, canCreateAssets, isAssetsPage } from './assets.jsx';
 import './styles.css';
 
@@ -15,10 +15,16 @@ function App() {
   const [page, setPage] = useState(window.location.pathname);
 
   async function loadIdentity() {
-    try { setIdentity(await getProtected('/demo')); }
-    catch (err) {
+    try {
+      if (!isLocal && !(await getAccessToken())) {
+        setIdentity(null);
+        return;
+      }
+      setIdentity(await getProtected('/demo'));
+    } catch (err) {
       setIdentity(null);
-      if (err.status !== 401) throw err;
+      if (err.status === 401 || err.status === 403) return;
+      throw err;
     }
   }
   useEffect(() => {
@@ -38,7 +44,10 @@ function App() {
   }
   async function login() {
     await signIn(group);
-    if (isLocal) { await loadIdentity(); navigate(isAssetsPage(window.location.pathname) ? window.location.pathname : '/protected'); }
+    if (isLocal || await getAccessToken()) {
+      await loadIdentity();
+      navigate(isAssetsPage(window.location.pathname) ? window.location.pathname : '/protected');
+    }
   }
   async function logout() {
     await signOut();
@@ -73,7 +82,7 @@ function App() {
         {groups.map(name => <option key={name}>{name}</option>)}
       </select></label>}
       <button className="primary" disabled={busy} onClick={() => act(login)}>
-        {isLocal ? 'Start local demo' : 'Sign in with Cognito'}
+        {isLocal ? 'Start local demo' : (busy ? 'Opening Cognito…' : 'Sign in with Cognito')}
       </button>
     </section>}
     {identity && page === '/' && <section><h2>You are signed in</h2>

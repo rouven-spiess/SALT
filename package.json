@@ -16,7 +16,8 @@
         "test:local": "node tests/local-smoke.mjs",
         "check:build": "node scripts/check-frontend-build.mjs",
         "seed:sandbox": "node scripts/seed-sandbox-assets.mjs",
-        "verify:sandbox": "node scripts/verify-sandbox-assets.mjs"
+        "verify:sandbox": "node scripts/verify-sandbox-assets.mjs",
+        "publish:frontend": "node scripts/publish-frontend.mjs"
     },
     "dependencies": {
         "aws-amplify": "6.20.0",
