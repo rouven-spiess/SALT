@@ -2,7 +2,7 @@
 
 SALT is an asset management application under development. It is designed to help organizations register assets, track their condition and value, and plan maintenance and replacement.
 
-This repository **builds on the SALT / asset-tracker starter from [mrleom](https://github.com/mrleom)** ([`mrleom/SALT`](https://github.com/mrleom/SALT)): React + Vite UI, local mock authentication, SAM Cognito/API/Lambda, and the five-group permission model. The work here adds Cognito Hosted UI, a CloudFront-hosted SPA, DynamoDB asset records, and a live sandbox deploy.
+This repository **builds on the SALT / asset-tracker starter from [mrleom](https://github.com/mrleom)** ([`mrleom/SALT`](https://github.com/mrleom/SALT)): React + Vite UI, local mock authentication, SAM Cognito/API/Lambda, and the five-group permission model. The work here adds Cognito Hosted UI, a CloudFront-hosted SPA, DynamoDB asset records, and a live sandbox deploy. Licensed under [MIT](LICENSE).
 
 The planned product also includes private photos, Bedrock identification, depreciation, and maintenance reminders. Those are later weeks.
 
@@ -45,7 +45,7 @@ No AWS account, credentials, Docker, or SAM is required.
 - Node.js **22.12 or later**, with npm.
 
 ```powershell
-git clone https://github.com/mrleom/SALT.git
+git clone https://github.com/rouven-spiess/SALT.git
 cd SALT
 npm.cmd ci
 npm.cmd run dev

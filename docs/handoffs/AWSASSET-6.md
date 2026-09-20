@@ -88,14 +88,13 @@ Last commit on `main`: `306ab67` (16 September 2026) — *Merge pull request #2 
 | `node_modules/` | Installed so the local demo and tests can run. |
 | `.aws-sam/` | SAM build artifacts from the sandbox deploy. |
 
-**Cloud (XLAB sandbox, region `us-east-1`, stack `salt-auth-sandbox`, `CREATE_COMPLETE`):**
+**Cloud (team xlab sandbox example, region `us-east-1`, stack `salt-auth-sandbox`):**
 
-- Cognito user pool `us-east-1_XAUoyTP4U`, hosted domain `xlab-salt-auth-sandbox`, public client, five groups, resource server `salt-sandbox`.
-- API Gateway `74c3geay01` stage `sandbox` with Cognito authorizer on `GET /demo` and `GET /admin`.
-- Lambda demo function, execution role, and 14-day log group.
-- Frontend origin registered as `http://localhost:3000`.
-- **No Cognito users.** Hosted UI at the domain root is an empty 200; `/login` with client, PKCE, and callback parameters is the sign-in page.
-- Existing XLAB website auth stack was not modified.
+- Cognito user pool, hosted-login domain, public app client, five groups, and resource server from stack outputs (IDs are not recorded here).
+- API Gateway stage with Cognito authorizer on protected methods, Lambda, and logs.
+- Hosted SPA on CloudFront plus `http://localhost:3000` as a local callback origin.
+- Test users are admin-created only. Hosted UI `/login` with client, PKCE, and callback parameters is the sign-in page.
+- Existing xlab website auth stacks were not modified.
 
 **Verification since that commit (local only):** `npm test` 37/37 passed and `npm run check:build` passed after the Amplify client was added. `npm run test:local` previously passed against the Vite demo. These do not prove Cognito or API Gateway security.
 
