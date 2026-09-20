@@ -4,11 +4,9 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { awsTarget } from './aws-target.mjs';
 
-const PROFILE = process.env.AWS_PROFILE || 'xlab-sandbox-sso';
-const REGION = process.env.AWS_REGION || 'us-east-1';
-const STACK = process.env.SALT_STACK || 'salt-auth-sandbox';
-const EXPECTED_ACCOUNT = process.env.SALT_ACCOUNT || '827478162277';
+const { profile: PROFILE, region: REGION, stack: STACK, account: EXPECTED_ACCOUNT } = awsTarget();
 
 function aws(args, extra = {}) {
   const result = spawnSync('aws', [...args, '--profile', PROFILE, '--region', REGION], {

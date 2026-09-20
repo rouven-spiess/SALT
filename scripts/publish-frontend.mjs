@@ -3,11 +3,9 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { awsTarget } from './aws-target.mjs';
 
-const PROFILE = process.env.AWS_PROFILE || 'xlab-sandbox-sso';
-const REGION = process.env.AWS_REGION || 'us-east-1';
-const STACK = process.env.SALT_STACK || 'salt-auth-sandbox';
-const EXPECTED_ACCOUNT = process.env.SALT_ACCOUNT || '827478162277';
+const { profile: PROFILE, region: REGION, stack: STACK, account: EXPECTED_ACCOUNT } = awsTarget();
 const root = fileURLToPath(new URL('..', import.meta.url));
 
 function awsJson(args) {
